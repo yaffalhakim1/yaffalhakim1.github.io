@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ meta_title }}</title>
+  <meta name="description" content="{{ meta_description }}">
+  <meta property="og:title" content="{{ meta_title }}">
+  <meta property="og:description" content="{{ meta_description }}">
+  <meta property="og:url" content="{{ meta_url }}">
+  <meta property="og:type" content="{{ meta_type }}">
+  <meta property="og:image" content="{{ meta_url }}static/og.png">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml">
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-logo">Yafi</a>
+    <div class="nav-links">
+      <a href="/projects">Projects</a>
+      <a href="/blog">Blog</a>
+    </div>
+  </nav>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <span>© 2026 Yafi Alhakim</span>
+    <div>
+      <a href="https://github.com/yaffalhakim1">GitHub</a>
+      <a href="https://fastwork.id/user/yaffalhaki/web-development-26119147">Fastwork</a>
+      <a href="https://6679524908482.gumroad.com/l/nothing-design-astro">Gumroad</a>
+    </div>
+  </footer>
+</body>
+</html>
+
+
+

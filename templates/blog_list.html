@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Blog</h1>
+<div class="post-list">
+  {% for post in posts %}
+  <a class="post-row" href="/blog/{{ post.slug }}">
+    <span class="post-date">{{ post.date }}</span>
+    <div>
+      <span class="post-title">{{ post.title }}</span>
+      <p class="post-desc">{{ post.description }}</p>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+<nav class="pagination">
+  {% if page > 1 %}<a href="/blog/page/{{ page - 1 }}">← Prev</a>{% endif %}
+  <span>{{ page }} / {{ total_pages }}</span>
+  {% if page < total_pages %}<a href="/blog/page/{{ page + 1 }}">Next →</a>{% endif %}
+</nav>
+{% endblock %}

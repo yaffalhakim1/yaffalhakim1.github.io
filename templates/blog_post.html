@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="post">
+  <header class="post-header">
+    <p class="post-date">{{ post.date }}</p>
+    <h1>{{ post.title }}</h1>
+    <p class="post-desc">{{ post.description }}</p>
+    <div class="tags">
+      {% for tag in post.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+    </div>
+  </header>
+  <div class="post-body">{{ post.html|safe }}</div>
+  <nav class="post-nav">
+    {% if let Some(p) = prev %}
+    <a href="/blog/{{ p.slug }}" class="post-nav-link">← {{ p.title }}</a>
+    {% endif %}
+    {% if let Some(n) = next %}
+    <a href="/blog/{{ n.slug }}" class="post-nav-link">{{ n.title }} →</a>
+    {% endif %}
+  </nav>
+</article>
+{% endblock %}

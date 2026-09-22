@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <p class="kicker mono">Fullstack Engineer · Jakarta</p>
+  <h1>{{ config.author }}</h1>
+  <p class="lead">{{ config.description }}</p>
+  <div class="hero-links">
+    <a href="/blog" class="button button-primary">Read the blog</a>
+    <a href="/projects" class="button button-secondary">See projects</a>
+    <a href="{{ config.github_url }}" class="button button-ghost">GitHub ↗</a>
+  </div>
+</section>
+
+<section>
+  <h2 class="section-title">Featured Projects</h2>
+  <div class="grid">
+    {% for project in featured %}
+    <article class="card">
+      <h3>{{ project.name }}</h3>
+      <p>{{ project.description }}</p>
+      <div class="tags">
+        {% for tag in project.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2 class="section-title">Recent Posts</h2>
+  <div class="post-list">
+    {% for post in recent %}
+    <a class="post-row" href="/blog/{{ post.slug }}">
+      <span class="post-date">{{ post.date }}</span>
+      <span class="post-title">{{ post.title }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
