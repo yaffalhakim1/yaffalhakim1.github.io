@@ -44,23 +44,22 @@ fn site_config() -> models::SiteConfig {
                 demo: None,
             },
             models::Project {
-                name: "YafRAG Workspace".into(),
+                name: "Kerenzikov".into(),
                 description:
-                    "Simplified, memory-optimized RAG implementation for querying and chatting with uploaded documents."
+                    "A native app for all your coding agents. GPUI-based, Windows and Android, forked from waku and rebranded."
                         .into(),
-                tags: vec!["Python", "FastAPI", "LanceDB", "React"]
-                    .into_iter()
-                    .map(Into::into)
-                    .collect(),
-                source: Some("https://github.com/yaffalhakim1/RAG-impl".into()),
-                demo: Some("https://github.com/yaffalhakim1/RAG-impl".into()),
+                tags: vec!["Rust", "GPUI"].into_iter().map(Into::into).collect(),
+                source: Some("https://github.com/yaffalhakim1/Kerenzikov-app".into()),
+                demo: None,
             },
             models::Project {
-                name: "Chill Out".into(),
-                description: "Study-with-music web app to help focus while relaxed.".into(),
-                tags: vec!["React", "TypeScript"].into_iter().map(Into::into).collect(),
-                source: None,
-                demo: Some("https://chill-out.vercel.app/".into()),
+                name: "Codex Discord Bridge".into(),
+                description:
+                    "Lightweight Rust bridge connecting Codex to Discord for remote monitoring and approvals."
+                        .into(),
+                tags: vec!["Rust", "Discord"].into_iter().map(Into::into).collect(),
+                source: Some("https://github.com/yaffalhakim1/codex-discord-bridge".into()),
+                demo: None,
             },
             models::Project {
                 name: "Simple E-commerce".into(),
