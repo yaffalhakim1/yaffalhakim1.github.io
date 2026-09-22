@@ -2,6 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    (() => {
+      try {
+        const theme = localStorage.getItem("theme");
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch {
+        /* Storage is unavailable; follow the system preference. */
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ meta_title }}</title>
   <meta name="description" content="{{ meta_description }}">
@@ -19,21 +31,50 @@
     <div class="nav-links">
       <a href="/projects">Projects</a>
       <a href="/blog">Blog</a>
+      <button type="button" class="theme-toggle mono" id="theme-toggle" aria-label="Toggle color theme">DARK</button>
     </div>
   </nav>
   <main class="container">
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">
-    <span>© 2026 Yafi Alhakim</span>
-    <div>
-      <a href="https://github.com/yaffalhakim1">GitHub</a>
-      <a href="https://fastwork.id/user/yaffalhaki/web-development-26119147">Fastwork</a>
-      <a href="https://6679524908482.gumroad.com/l/nothing-design-astro">Gumroad</a>
+    <div class="footer-top">
+      <span>© 2026 Yafi Alhakim</span>
+      <div>
+        <a href="https://github.com/yaffalhakim1">GitHub</a>
+        <a href="https://fastwork.id/user/yaffalhaki/web-development-26119147">Fastwork</a>
+        <a href="https://6679524908482.gumroad.com/l/nothing-design-astro">Gumroad</a>
+      </div>
     </div>
+    <p class="footer-stack">MADE WITH <a href="https://www.rust-lang.org" target="_blank" rel="noopener">RUST</a> &middot; AXUM &middot; ASKAMA &middot; PULLDOWN-CMARK &middot; SYNTECT &middot; TOKIO</p>
   </footer>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      if (!toggle) return;
+
+      const getEffectiveTheme = () => {
+        const t = root.dataset.theme;
+        if (t === "dark" || t === "light") return t;
+        return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      };
+      const setTheme = (theme) => {
+        root.dataset.theme = theme;
+        toggle.textContent = theme === "dark" ? "LIGHT" : "DARK";
+        try {
+          localStorage.setItem("theme", theme);
+        } catch {
+          /* Keep the current explicit theme active when storage is unavailable. */
+        }
+      };
+
+      toggle.textContent = getEffectiveTheme() === "dark" ? "LIGHT" : "DARK";
+
+      toggle.addEventListener("click", () => {
+        setTheme(getEffectiveTheme() === "dark" ? "light" : "dark");
+      });
+    })();
+  </script>
 </body>
 </html>
-
-
-

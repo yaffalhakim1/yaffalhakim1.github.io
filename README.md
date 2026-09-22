@@ -88,6 +88,11 @@ cargo test
   the page base and warm charcoal `#30302E` for cards/code. Typography is a
   single serif family for headings and body, with JetBrains Mono for metadata,
   tags, dates, nav, and code.
+- **Color theme**: follows `prefers-color-scheme` by default. The nav toggle
+  explicitly applies and persists `light` or `dark` in `localStorage` under the
+  key `theme`; an inline head script applies that stored choice before first
+  paint to avoid a flash of the wrong theme.
+
 - **Syntax highlighting**: syntect with class-based output (`ClassStyle::Spaced`).
   The highlighted classes are mapped to the Kami palette in `static/style.css`,
   avoiding inlined colors while keeping the HTML clean.
