@@ -47,7 +47,8 @@ pub struct HighlightGame {
     pub platform: String,
     pub playtime: String,
     pub achievements: String,
-    pub note: Option<String>,
+    pub icon: String,
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone)]

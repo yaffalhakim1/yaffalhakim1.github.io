@@ -866,13 +866,13 @@ a.info-card:hover .info-arrow {
 .heatmap-months,
 .heatmap-grid {
   display: flex;
-  gap: 2px;
+  gap: 3px;
   min-width: max-content;
 }
-.heatmap-months { margin-bottom: 0.35rem; }
+.heatmap-months { margin-bottom: 0.5rem; }
 .heatmap-month {
-  width: 9px;
-  font-size: 0.625rem;
+  width: 13px;
+  font-size: 0.75rem;
   line-height: 1;
   color: var(--stone);
   white-space: nowrap;
@@ -881,16 +881,16 @@ a.info-card:hover .info-arrow {
 .heatmap-week {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 /* A trailing partial week sits at the bottom, like GitHub's graph. */
 .heatmap-week:last-child { justify-content: flex-end; }
 /* Intensity ramp mixed from the brand accent, the same way Kami derives its
    other tints, so it follows every theme automatically. */
 .heat-cell {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
   background: var(--sand);
 }
 .heat-cell[data-level="1"] {
@@ -907,10 +907,10 @@ a.info-card:hover .info-arrow {
 .heatmap-legend {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-top: 0.75rem;
+  gap: 3px;
+  margin-top: 1rem;
   color: var(--stone);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
 }
 .heatmap-legend .heat-cell { display: inline-block; }
 .heatmap-legend span:first-child { margin-right: 0.25rem; }

@@ -109,8 +109,9 @@ fn highlight_games() -> Vec<models::HighlightGame> {
         name: "Assassin's Creed Shadows".into(),
         platform: "Ubisoft Connect".into(),
         playtime: "100 hrs".into(),
-        achievements: "100% (All Achievements)".into(),
-        note: Some("Mastered feudal Japan".into()),
+        achievements: "100% unlocked".into(),
+        icon: "/static/ac-shadows.svg".into(),
+        url: Some("https://store.ubisoft.com/assassins-creed-shadows".into()),
     }]
 }
 

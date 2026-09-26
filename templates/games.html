@@ -31,22 +31,19 @@
   <h2 class="section-title">Hall of Fame</h2>
   <div class="game-grid">
     {% for game in highlights %}
-    <div class="game-card highlight-card">
-      <div class="game-body">
-        <div class="highlight-header">
-          <span class="game-name">{{ game.name }}</span>
-          <span class="platform-badge mono">{{ game.platform }}</span>
-        </div>
-        <div class="highlight-stats mono">
-          <span>{{ game.playtime }}</span>
-          <span>·</span>
-          <span>{{ game.achievements }}</span>
-        </div>
-        {% if let Some(note) = game.note %}
-        <p class="highlight-note mono">{{ note }}</p>
-        {% endif %}
-      </div>
-    </div>
+    {% if let Some(url) = game.url %}
+    <a class="game-card" href="{{ url }}" target="_blank" rel="noopener">
+    {% else %}
+    <div class="game-card">
+    {% endif %}
+      {% if !game.icon.is_empty() %}
+      <img class="game-icon" src="{{ game.icon }}" alt="" width="40" height="40" loading="lazy">
+      {% endif %}
+      <span class="game-body">
+        <span class="game-name">{{ game.name }}</span>
+        <span class="game-time mono">{{ game.platform }} · {{ game.playtime }} · {{ game.achievements }}</span>
+      </span>
+    {% if game.url.is_some() %}</a>{% else %}</div>{% endif %}
     {% endfor %}
   </div>
 </section>
