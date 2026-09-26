@@ -68,6 +68,9 @@
     <div class="progress-row">
       {% if !game.icon_url.is_empty() %}
       <img class="progress-icon" src="{{ game.icon_url }}" alt="" width="32" height="32" loading="lazy">
+      {% else %}
+      {# Keep the icon column: a missing icon must not shift the whole row. #}
+      <span class="progress-icon" aria-hidden="true"></span>
       {% endif %}
       <span class="progress-name">{{ game.name }}</span>
       <span class="progress-count mono">{{ game.unlocked }}/{{ game.total }}</span>

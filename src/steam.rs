@@ -8,10 +8,17 @@
 use chrono::{Datelike, Duration, NaiveDate};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn snapshot_path() -> PathBuf {
     PathBuf::from("content/steam.json")
+}
+
+/// Overlay extracted from the local Steam cache (see `--import-local`).
+///
+/// Optional: when the file is absent the page renders the API snapshot alone.
+pub fn local_path() -> PathBuf {
+    PathBuf::from("content/steam-local.json")
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,9 +77,253 @@ pub struct SteamData {
     pub fetched_at: String,
 }
 
+/// One unlock recorded by the local Steam cache.
+///
+/// The cache keeps no achievement schema and no icon, only the apiname, the
+/// display strings, and the unlock time.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalAchievement {
+    pub apiname: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub unlocktime: i64,
+}
+
+/// Per-game overlay extracted from the local Steam cache.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalGame {
+    pub appid: u64,
+    #[serde(default)]
+    pub name: String,
+    /// How many achievements the game defines, unlocked or not.
+    #[serde(default)]
+    pub total: usize,
+    #[serde(default)]
+    pub achievements: Vec<LocalAchievement>,
+}
+
+/// The committed local-cache overlay (`content/steam-local.json`).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LocalOverlay {
+    #[serde(default)]
+    pub account: String,
+    #[serde(default)]
+    pub games: Vec<LocalGame>,
+}
+
 pub fn load() -> Option<SteamData> {
     let raw = std::fs::read_to_string(snapshot_path()).ok()?;
+    let snapshot: SteamData = serde_json::from_str(&raw).ok()?;
+    // A missing or malformed overlay is not an error: the page falls back to
+    // the API snapshot exactly as it rendered before the overlay existed.
+    Some(match read_local() {
+        Some(overlay) => merge(snapshot, overlay),
+        None => snapshot,
+    })
+}
+
+// ————— Local cache overlay —————
+
+fn read_local() -> Option<LocalOverlay> {
+    let raw = std::fs::read_to_string(local_path()).ok()?;
     serde_json::from_str(&raw).ok()
+}
+
+/// Convert the raw `steam-everything.json` dump into the committed overlay.
+///
+/// The dump is a read-only extraction of the local Steam cache. Its `unlocked`
+/// counter is a cache of `achievement_progress.json` and can lag behind the
+/// per-app progress files — Khazan and Mortal Shell II both report 0 unlocks
+/// while their `detail` lists hold real, timestamped unlocks — so the achieved
+/// rows are counted from `detail` alone and the untrusted counter is dropped.
+pub fn import_local(path: &Path) -> Result<LocalOverlay, String> {
+    let raw = std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+    let dump: serde_json::Value =
+        serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))?;
+
+    let rows = dump["rows"]
+        .as_array()
+        .ok_or_else(|| format!("{} has no `rows` array", path.display()))?;
+
+    let mut games = Vec::new();
+    for row in rows {
+        // The dump keys apps by string because it was extracted from Steam's
+        // JSON caches; the overlay uses real integers.
+        let Some(appid) = row["appid"].as_str().and_then(|id| id.parse::<u64>().ok()) else {
+            continue;
+        };
+        let Some(detail) = row["detail"].as_array() else {
+            continue;
+        };
+        let achievements: Vec<LocalAchievement> = detail
+            .iter()
+            .filter_map(|entry| {
+                let apiname = entry["api"].as_str().unwrap_or_default();
+                let unlocktime = entry["at"].as_i64().unwrap_or(0);
+                // A row without both an apiname and a timestamp cannot be
+                // merged onto the API schema, so it is not worth carrying.
+                if apiname.is_empty() || unlocktime <= 0 {
+                    return None;
+                }
+                Some(LocalAchievement {
+                    apiname: apiname.to_string(),
+                    name: entry["name"].as_str().unwrap_or_default().to_string(),
+                    description: entry["desc"].as_str().unwrap_or_default().to_string(),
+                    unlocktime,
+                })
+            })
+            .collect();
+        if achievements.is_empty() {
+            continue;
+        }
+        games.push(LocalGame {
+            appid,
+            name: row["name"].as_str().unwrap_or_default().to_string(),
+            total: row["total"].as_u64().unwrap_or(0) as usize,
+            achievements,
+        });
+    }
+
+    games.sort_by_key(|game| game.appid);
+    Ok(LocalOverlay {
+        account: dump["account"].as_str().unwrap_or_default().to_string(),
+        games,
+    })
+}
+
+pub fn write_local_overlay(overlay: &LocalOverlay) -> Result<(), String> {
+    let json = serde_json::to_string_pretty(overlay).map_err(|e| e.to_string())?;
+    let path = local_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&path, json + "\n").map_err(|e| e.to_string())
+}
+
+/// Merge the local-cache overlay into an API snapshot.
+///
+/// The snapshot stays the base: it carries the owned-games list, the playtime,
+/// and the full per-game achievement schema with icons. The overlay only adds
+/// what Steam never returned — unlock timestamps for games the snapshot
+/// skipped, and whole sets for games the snapshot never fetched at all.
+pub fn merge(mut snapshot: SteamData, overlay: LocalOverlay) -> SteamData {
+    // Titles and icons for games the snapshot knows but never fetched
+    // achievements for; the local cache carries neither.
+    let owned: BTreeMap<u64, (String, String)> = snapshot
+        .games
+        .iter()
+        .map(|game| (game.appid, (game.name.clone(), game.img_icon_url.clone())))
+        .collect();
+
+    let mut pending: BTreeMap<u64, LocalGame> = overlay
+        .games
+        .into_iter()
+        .map(|game| (game.appid, game))
+        .collect();
+
+    for game in &mut snapshot.achievements {
+        let Some(local) = pending.remove(&game.appid) else {
+            continue;
+        };
+
+        // Local progress can be ahead of what Steam has uploaded, so anything
+        // the local cache has an unlock time for is marked achieved even if the
+        // snapshot still reports it locked.
+        let unlocks: BTreeMap<&str, i64> = local
+            .achievements
+            .iter()
+            .map(|achievement| (achievement.apiname.as_str(), achievement.unlocktime))
+            .collect();
+
+        // Unlocks the snapshot's schema does not list at all would otherwise be
+        // dropped silently, which would understate the profile.
+        let unknown: Vec<&LocalAchievement> = local
+            .achievements
+            .iter()
+            .filter(|local| {
+                !game
+                    .achievements
+                    .iter()
+                    .any(|api| api.apiname == local.apiname)
+            })
+            .collect();
+
+        for achievement in &mut game.achievements {
+            if let Some(&unlocktime) = unlocks.get(achievement.apiname.as_str()) {
+                achievement.achieved = 1;
+                achievement.unlocktime = unlocktime;
+            }
+        }
+
+        game.achievements
+            .extend(unknown.into_iter().map(|local| Achievement {
+                apiname: local.apiname.clone(),
+                achieved: 1,
+                unlocktime: local.unlocktime,
+                name: local.name.clone(),
+                description: local.description.clone(),
+                icon: String::new(),
+            }));
+    }
+
+    for (appid, game) in pending {
+        snapshot
+            .achievements
+            .push(synthesize(game, owned.get(&appid)));
+    }
+
+    // Both inputs count unlocks in their own way; the merged view is the only
+    // honest source for the profile chip.
+    snapshot.unlocked_achievements = snapshot
+        .achievements
+        .iter()
+        .flat_map(|game| game.achievements.iter())
+        .filter(|achievement| achievement.achieved == 1)
+        .count();
+    snapshot
+}
+
+/// Build the achievement set for a game the snapshot never fetched.
+///
+/// The local cache only records unlocks, so the achieved entries are padded
+/// with locked placeholders up to the schema total: the progress list needs an
+/// honest denominator and renders counts, not per-achievement icons.
+fn synthesize(game: LocalGame, owned: Option<&(String, String)>) -> GameAchievements {
+    let total = game.total.max(game.achievements.len());
+    let mut achievements: Vec<Achievement> = game
+        .achievements
+        .into_iter()
+        .map(|local| Achievement {
+            apiname: local.apiname,
+            achieved: 1,
+            unlocktime: local.unlocktime,
+            name: local.name,
+            description: local.description,
+            icon: String::new(),
+        })
+        .collect();
+    achievements.resize_with(total, || Achievement {
+        apiname: String::new(),
+        achieved: 0,
+        unlocktime: 0,
+        name: String::new(),
+        description: String::new(),
+        icon: String::new(),
+    });
+
+    let (name, img_icon_url) = match owned {
+        Some((name, icon)) => (name.clone(), icon.clone()),
+        None => (game.name, String::new()),
+    };
+    GameAchievements {
+        appid: game.appid,
+        name,
+        img_icon_url,
+        achievements,
+    }
 }
 // ————— Heatmap —————
 
@@ -502,5 +753,284 @@ mod tests {
         assert_eq!(format_playtime(60), "1h");
         assert_eq!(format_playtime(90), "1h 30min");
         assert_eq!(format_total_playtime(90), "1h");
+    }
+    // ————— Local overlay merge —————
+
+    fn ach(apiname: &str, achieved: u8, unlocktime: i64) -> Achievement {
+        Achievement {
+            apiname: apiname.into(),
+            achieved,
+            unlocktime,
+            name: format!("{apiname} name"),
+            description: String::new(),
+            icon: String::new(),
+        }
+    }
+
+    fn local_game(appid: u64, name: &str, total: usize, unlocks: &[(&str, i64)]) -> LocalGame {
+        LocalGame {
+            appid,
+            name: name.into(),
+            total,
+            achievements: unlocks
+                .iter()
+                .map(|(apiname, at)| LocalAchievement {
+                    apiname: (*apiname).into(),
+                    name: format!("{apiname} name"),
+                    description: String::new(),
+                    unlocktime: *at,
+                })
+                .collect(),
+        }
+    }
+
+    fn overlay(games: Vec<LocalGame>) -> LocalOverlay {
+        LocalOverlay {
+            account: "384463082".into(),
+            games,
+        }
+    }
+
+    fn snapshot(games: Vec<Game>, achievements: Vec<GameAchievements>) -> SteamData {
+        SteamData {
+            player: None,
+            games,
+            achievements,
+            total_playtime: 0,
+            total_games: 0,
+            unlocked_achievements: 0,
+            fetched_at: "2026-01-01T00:00:00Z".into(),
+        }
+    }
+
+    #[test]
+    fn merge_stamps_local_unlock_times_onto_the_snapshot_schema() {
+        // The snapshot has the full schema (icons, locked entries) but Steam
+        // never returned unlock times for it; the local cache has the times.
+        let base = snapshot(
+            Vec::new(),
+            vec![GameAchievements {
+                appid: 292030,
+                name: "The Witcher 3".into(),
+                img_icon_url: "icon".into(),
+                achievements: vec![ach("won", 0, 0), ach("locked", 0, 0)],
+            }],
+        );
+        let merged = merge(
+            base,
+            overlay(vec![local_game(
+                292030,
+                "The Witcher 3",
+                2,
+                &[("won", 1_700_000_000)],
+            )]),
+        );
+
+        let game = &merged.achievements[0];
+        assert_eq!(
+            game.achievements.len(),
+            2,
+            "schema is preserved, not replaced"
+        );
+        assert_eq!(game.achievements[0].achieved, 1);
+        assert_eq!(game.achievements[0].unlocktime, 1_700_000_000);
+        assert_eq!(
+            game.achievements[0].icon,
+            String::new(),
+            "snapshot icon survives"
+        );
+        assert_eq!(game.achievements[1].achieved, 0);
+        assert_eq!(game.achievements[1].unlocktime, 0);
+        assert_eq!(merged.unlocked_achievements, 1);
+    }
+
+    #[test]
+    fn merge_synthesizes_local_only_games_padded_to_total() {
+        // Khazan-shaped: the snapshot owns the game (so it has a name and icon)
+        // but never fetched its achievements.
+        let base = snapshot(
+            vec![Game {
+                appid: 2680010,
+                name: "The First Berserker: Khazan".into(),
+                playtime_forever: 1461,
+                playtime_2weeks: 0,
+                img_icon_url: "khazan".into(),
+            }],
+            Vec::new(),
+        );
+        let merged = merge(
+            base,
+            overlay(vec![
+                local_game(2680010, "Khazan", 57, &[("Boss_01", 100), ("Boss_02", 200)]),
+                // Not in the owned list at all: the local title is all we have.
+                local_game(730, "Counter-Strike 2", 1, &[("win", 300)]),
+            ]),
+        );
+
+        let khazan = merged
+            .achievements
+            .iter()
+            .find(|game| game.appid == 2680010)
+            .expect("khazan synthesized");
+        assert_eq!(
+            khazan.name, "The First Berserker: Khazan",
+            "owned title wins"
+        );
+        assert_eq!(khazan.img_icon_url, "khazan", "owned icon is carried over");
+        assert_eq!(khazan.achievements.len(), 57, "padded to the schema total");
+        assert_eq!(
+            khazan
+                .achievements
+                .iter()
+                .filter(|a| a.achieved == 1)
+                .count(),
+            2
+        );
+        assert_eq!(khazan.achievements[0].apiname, "Boss_01");
+        assert_eq!(khazan.achievements[0].unlocktime, 100);
+        assert_eq!(khazan.achievements[2].achieved, 0, "padding is locked");
+
+        let cs2 = merged
+            .achievements
+            .iter()
+            .find(|game| game.appid == 730)
+            .expect("cs2 synthesized");
+        assert_eq!(cs2.name, "Counter-Strike 2");
+        assert_eq!(cs2.img_icon_url, String::new());
+        assert_eq!(cs2.achievements.len(), 1);
+
+        assert_eq!(merged.unlocked_achievements, 3);
+    }
+
+    #[test]
+    fn merge_keeps_local_unlocks_the_snapshot_schema_does_not_list() {
+        // Dropping these would silently understate the profile, so an unknown
+        // apiname is appended rather than ignored.
+        let base = snapshot(
+            Vec::new(),
+            vec![GameAchievements {
+                appid: 1,
+                name: "Game".into(),
+                img_icon_url: String::new(),
+                achievements: vec![ach("known", 0, 0)],
+            }],
+        );
+        let merged = merge(
+            base,
+            overlay(vec![local_game(
+                1,
+                "Game",
+                2,
+                &[("known", 10), ("extra", 20)],
+            )]),
+        );
+
+        let game = &merged.achievements[0];
+        assert_eq!(game.achievements.len(), 2);
+        assert_eq!(game.achievements[1].apiname, "extra");
+        assert_eq!(game.achievements[1].achieved, 1);
+        assert_eq!(game.achievements[1].unlocktime, 20);
+        assert_eq!(merged.unlocked_achievements, 2);
+    }
+
+    #[test]
+    fn merge_total_unlocks_matches_the_honest_local_total() {
+        // The real numbers this merge exists for: the API snapshot knows 374
+        // unlocks, the local cache adds 66 the snapshot never fetched, and the
+        // honest merged total is 440.
+        let mut base_achievements = Vec::new();
+        for index in 0..374 {
+            base_achievements.push(ach(&format!("api{index}"), 1, 1_700_000_000 + index as i64));
+        }
+        let base = snapshot(
+            Vec::new(),
+            vec![GameAchievements {
+                appid: 292030,
+                name: "Overlap".into(),
+                img_icon_url: String::new(),
+                achievements: base_achievements,
+            }],
+        );
+
+        // 100 of the local unlocks are already counted by the snapshot; the
+        // other 66 come from a game the snapshot never fetched.
+        let mut local_only = Vec::new();
+        for index in 0..66 {
+            local_only.push((format!("local{index}"), 1_780_000_000 + index as i64));
+        }
+        let local_only: Vec<(&str, i64)> = local_only
+            .iter()
+            .map(|(apiname, at)| (apiname.as_str(), *at))
+            .collect();
+
+        let merged = merge(
+            base,
+            overlay(vec![
+                local_game(292030, "Overlap", 78, &[("api0", 10), ("api1", 11)]),
+                local_game(2680010, "Khazan", 57, &local_only),
+            ]),
+        );
+
+        assert_eq!(merged.unlocked_achievements, 440);
+    }
+
+    #[test]
+    fn merge_reports_khazan_progress_despite_a_zero_cached_count() {
+        // Khazan is the stale-count case end to end: the local cache counts 0
+        // unlocks, its detail list holds 37, and the game is absent from the
+        // snapshot's achievement sets. The merged row must read 37/57 (64%).
+        let unlocks: Vec<(String, i64)> = (0..37)
+            .map(|index| (format!("Boss_{index:02}"), 1_778_000_000 + index as i64))
+            .collect();
+        let unlocks: Vec<(&str, i64)> = unlocks
+            .iter()
+            .map(|(apiname, at)| (apiname.as_str(), *at))
+            .collect();
+
+        let merged = merge(
+            snapshot(Vec::new(), Vec::new()),
+            overlay(vec![local_game(
+                2680010,
+                "The First Berserker: Khazan",
+                57,
+                &unlocks,
+            )]),
+        );
+
+        let khazan = &merged.achievements[0];
+        let unlocked = khazan
+            .achievements
+            .iter()
+            .filter(|a| a.achieved == 1)
+            .count();
+        assert_eq!(unlocked, 37);
+        assert_eq!(khazan.achievements.len(), 57);
+        assert_eq!(unlocked * 100 / khazan.achievements.len(), 64);
+    }
+
+    #[test]
+    fn import_local_counts_detail_not_the_stale_unlocked_field() {
+        // Khazan and Mortal Shell II both report `unlocked: 0` while their
+        // `detail` lists hold real timestamped unlocks, so the converter counts
+        // the rows instead of trusting the cached counter.
+        let json = r#"{"account":"384463082","rows":[
+            {"appid":"2680010","name":"The First Berserker: Khazan","unlocked":0,"total":57,
+             "detail":[{"api":"Boss_01","name":"Ruler","desc":"d","at":1778654434,"at_str":"x"},
+                       {"api":"Boss_02","name":"Phantom","desc":"d","at":1778686417,"at_str":"x"}]},
+            {"appid":"7","name":null,"unlocked":0,"total":0,"detail":[]},
+            {"appid":"not-a-number","name":"junk","unlocked":0,"total":0,"detail":[{"api":"a","at":5}]}]}"#;
+        let path = std::env::temp_dir().join(format!("steam-local-{}.json", std::process::id()));
+        std::fs::write(&path, json).unwrap();
+        let imported = import_local(&path).expect("import");
+        std::fs::remove_file(&path).ok();
+
+        assert_eq!(imported.account, "384463082");
+        // Rows without detail (and unparsable appids) are dropped, and the
+        // string appid becomes a number.
+        assert_eq!(imported.games.len(), 1);
+        assert_eq!(imported.games[0].appid, 2680010);
+        assert_eq!(imported.games[0].total, 57);
+        assert_eq!(imported.games[0].achievements.len(), 2);
+        assert_eq!(imported.games[0].achievements[0].unlocktime, 1778654434);
     }
 }

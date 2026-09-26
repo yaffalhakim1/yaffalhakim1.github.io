@@ -2,6 +2,9 @@
 /dist
 /.hermes-task*.md
 
+# personal Steam cache dump (extracted local data, never published)
+STEAM-CACHE-REPORT.md
+
 # environment variables (Steam API credentials)
 .env
 .env.local

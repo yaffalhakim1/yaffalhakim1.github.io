@@ -386,6 +386,38 @@ fn main() {
                 }
             }
         }
+        if arg == "--import-local" {
+            let Some(source) = args.next() else {
+                eprintln!("Usage: cargo run -- --import-local <steam-everything.json>");
+                std::process::exit(2);
+            };
+            match steam::import_local(std::path::Path::new(&source)) {
+                Ok(overlay) => match steam::write_local_overlay(&overlay) {
+                    Ok(()) => {
+                        let unlocks: usize = overlay
+                            .games
+                            .iter()
+                            .map(|game| game.achievements.len())
+                            .sum();
+                        eprintln!(
+                            "Wrote {} games, {} unlocks to {}",
+                            overlay.games.len(),
+                            unlocks,
+                            steam::local_path().display()
+                        );
+                        return;
+                    }
+                    Err(error) => {
+                        eprintln!("Failed to write overlay: {error}");
+                        std::process::exit(1);
+                    }
+                },
+                Err(error) => {
+                    eprintln!("Failed to import local cache data: {error}");
+                    std::process::exit(1);
+                }
+            }
+        }
         if arg == "--export" {
             let dir = args.next().map(PathBuf::from).unwrap_or_else(export_dir);
             export_site(&dir);
