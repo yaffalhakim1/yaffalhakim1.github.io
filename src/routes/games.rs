@@ -17,6 +17,10 @@ pub struct GameView {
     pub store_url: Option<String>,
 }
 
+/// Rows below this share are noise: one unlucky unlock on a 100-achievement
+/// game would otherwise pad the list with near-empty bars.
+const PROGRESS_MIN_PERCENT: usize = 25;
+
 pub struct GameProgress {
     pub name: String,
     pub icon_url: String,
@@ -41,6 +45,10 @@ pub struct GamesTemplate {
     pub og_image: String,
 }
 
+fn keep_progress_row(row: &GameProgress) -> bool {
+    row.percent >= PROGRESS_MIN_PERCENT
+}
+
 fn view(game: &steam::Game) -> GameView {
     let icon_url = if game.img_icon_url.is_empty() {
         String::new()
@@ -63,7 +71,8 @@ fn view(game: &steam::Game) -> GameView {
 
 fn template(state: &AppState) -> GamesTemplate {
     let data = state.steam.clone();
-    let heatmap = data.as_ref().and_then(steam::heatmap);
+    // Heatmap hidden for now — restore when wanted (computation stays in `steam`).
+    let heatmap: Option<steam::Heatmap> = None;
 
     let recent = data
         .as_ref()
@@ -145,6 +154,9 @@ fn template(state: &AppState) -> GamesTemplate {
         });
     }
     progress.sort_by(|a, b| b.percent.cmp(&a.percent).then(a.name.cmp(&b.name)));
+    // Steam-derived and curated rows are filtered by the same rule, after the
+    // sort, so the list never mixes thresholds.
+    progress.retain(keep_progress_row);
 
     GamesTemplate {
         total_playtime: data
@@ -157,7 +169,7 @@ fn template(state: &AppState) -> GamesTemplate {
         top_games,
         progress,
         meta_title: "Games — Yafi Alhakim".into(),
-        meta_description: "Steam library, playtime, and a heatmap of achievement unlocks."
+        meta_description: "Steam library, playtime, and achievement progress."
             .into(),
         meta_url: format!("{}/games", state.config.base_url),
         meta_type: "website".into(),
@@ -173,4 +185,36 @@ pub fn games_html(state: &AppState) -> String {
     template(state)
         .render()
         .expect("failed to render games page")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn row(name: &str, percent: usize) -> GameProgress {
+        GameProgress {
+            name: name.into(),
+            icon_url: String::new(),
+            unlocked: percent,
+            total: 100,
+            percent,
+        }
+    }
+
+    #[test]
+    fn progress_list_drops_rows_below_25_percent() {
+        // 25 is the boundary and survives; 24 does not.
+        let mut rows = vec![
+            row("complete", 100),
+            row("edge", 25),
+            row("just-under", 24),
+            row("barely-started", 1),
+            row("untouched", 0),
+        ];
+
+        rows.retain(keep_progress_row);
+
+        let names: Vec<&str> = rows.iter().map(|row| row.name.as_str()).collect();
+        assert_eq!(names, ["complete", "edge"]);
+    }
 }

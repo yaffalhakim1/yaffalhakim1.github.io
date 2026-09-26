@@ -586,6 +586,20 @@ html[data-theme="dark"] .z-punctuation { color: #D6D4C8; }
 .theme-toggle:hover {
   background: var(--sand);
 }
+.theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+.theme-toggle .icon-sun { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+/* The palette follows the system preference until a theme is stored, so the
+   icon has to as well. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+}
 
 /* ————— Small screens ————— */
 @media (max-width: 640px) {

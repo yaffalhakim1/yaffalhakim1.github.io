@@ -392,26 +392,36 @@ fn main() {
                 std::process::exit(2);
             };
             match steam::import_local(std::path::Path::new(&source)) {
-                Ok(overlay) => match steam::write_local_overlay(&overlay) {
-                    Ok(()) => {
-                        let unlocks: usize = overlay
-                            .games
-                            .iter()
-                            .map(|game| game.achievements.len())
-                            .sum();
-                        eprintln!(
-                            "Wrote {} games, {} unlocks to {}",
-                            overlay.games.len(),
-                            unlocks,
-                            steam::local_path().display()
-                        );
-                        return;
+                // The dump has no icon data, so hashes added to the committed
+                // overlay by hand are carried over instead of being wiped.
+                Ok(mut overlay) => {
+                    let icons = steam::existing_icons();
+                    for game in &mut overlay.games {
+                        if let Some(icon) = icons.get(&game.appid) {
+                            game.img_icon_url = icon.clone();
+                        }
                     }
-                    Err(error) => {
-                        eprintln!("Failed to write overlay: {error}");
-                        std::process::exit(1);
+                    match steam::write_local_overlay(&overlay) {
+                        Ok(()) => {
+                            let unlocks: usize = overlay
+                                .games
+                                .iter()
+                                .map(|game| game.achievements.len())
+                                .sum();
+                            eprintln!(
+                                "Wrote {} games, {} unlocks to {}",
+                                overlay.games.len(),
+                                unlocks,
+                                steam::local_path().display()
+                            );
+                            return;
+                        }
+                        Err(error) => {
+                            eprintln!("Failed to write overlay: {error}");
+                            std::process::exit(1);
+                        }
                     }
-                },
+                }
                 Err(error) => {
                     eprintln!("Failed to import local cache data: {error}");
                     std::process::exit(1);

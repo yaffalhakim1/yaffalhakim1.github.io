@@ -98,6 +98,13 @@ pub struct LocalGame {
     pub appid: u64,
     #[serde(default)]
     pub name: String,
+    /// Steam icon hash for the game, when the snapshot cannot supply one.
+    ///
+    /// Local-only games (the snapshot never fetched them) have no icon in the
+    /// API data, so the hash is carried here by hand and the merge builds the
+    /// same URL the snapshot path does.
+    #[serde(default)]
+    pub img_icon_url: String,
     /// How many achievements the game defines, unlocked or not.
     #[serde(default)]
     pub total: usize,
@@ -130,6 +137,25 @@ pub fn load() -> Option<SteamData> {
 fn read_local() -> Option<LocalOverlay> {
     let raw = std::fs::read_to_string(local_path()).ok()?;
     serde_json::from_str(&raw).ok()
+}
+
+/// Icon hashes already committed to the overlay, keyed by appid.
+///
+/// The raw dump carries no icon data, so a re-import would wipe the hashes
+/// added to `content/steam-local.json` by hand; the caller reads them back here
+/// and reapplies them. A missing or malformed file yields no hashes, which is
+/// exactly right for a first import.
+pub fn existing_icons() -> BTreeMap<u64, String> {
+    read_local()
+        .map(|overlay| {
+            overlay
+                .games
+                .into_iter()
+                .filter(|game| !game.img_icon_url.is_empty())
+                .map(|game| (game.appid, game.img_icon_url))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Convert the raw `steam-everything.json` dump into the committed overlay.
@@ -182,6 +208,7 @@ pub fn import_local(path: &Path) -> Result<LocalOverlay, String> {
         games.push(LocalGame {
             appid,
             name: row["name"].as_str().unwrap_or_default().to_string(),
+            img_icon_url: String::new(),
             total: row["total"].as_u64().unwrap_or(0) as usize,
             achievements,
         });
@@ -211,7 +238,8 @@ pub fn write_local_overlay(overlay: &LocalOverlay) -> Result<(), String> {
 /// skipped, and whole sets for games the snapshot never fetched at all.
 pub fn merge(mut snapshot: SteamData, overlay: LocalOverlay) -> SteamData {
     // Titles and icons for games the snapshot knows but never fetched
-    // achievements for; the local cache carries neither.
+    // achievements for; the local cache carries a name only in its own file,
+    // and an icon only when one was added by hand.
     let owned: BTreeMap<u64, (String, String)> = snapshot
         .games
         .iter()
@@ -314,10 +342,17 @@ fn synthesize(game: LocalGame, owned: Option<&(String, String)>) -> GameAchievem
         icon: String::new(),
     });
 
-    let (name, img_icon_url) = match owned {
-        Some((name, icon)) => (name.clone(), icon.clone()),
-        None => (game.name, String::new()),
+    let name = match owned {
+        Some((name, _)) => name.clone(),
+        None => game.name.clone(),
     };
+    // The snapshot's icon wins; a game it never listed falls back to the hash
+    // carried in the overlay, which the dump itself never provides.
+    let img_icon_url = owned
+        .map(|(_, icon)| icon.as_str())
+        .filter(|icon| !icon.is_empty())
+        .unwrap_or(game.img_icon_url.as_str())
+        .to_string();
     GameAchievements {
         appid: game.appid,
         name,
@@ -771,6 +806,7 @@ mod tests {
         LocalGame {
             appid,
             name: name.into(),
+            img_icon_url: String::new(),
             total,
             achievements: unlocks
                 .iter()
@@ -863,7 +899,10 @@ mod tests {
             overlay(vec![
                 local_game(2680010, "Khazan", 57, &[("Boss_01", 100), ("Boss_02", 200)]),
                 // Not in the owned list at all: the local title is all we have.
-                local_game(730, "Counter-Strike 2", 1, &[("win", 300)]),
+                LocalGame {
+                    img_icon_url: "6b814f92e25cec848c9729ce26c8f39afcc6e5f7".into(),
+                    ..local_game(730, "Counter-Strike 2", 1, &[("win", 300)])
+                },
             ]),
         );
 
@@ -896,7 +935,9 @@ mod tests {
             .find(|game| game.appid == 730)
             .expect("cs2 synthesized");
         assert_eq!(cs2.name, "Counter-Strike 2");
-        assert_eq!(cs2.img_icon_url, String::new());
+        // The snapshot never listed this appid, so the hand-added overlay hash
+        // is the only icon source and must survive the synthesis.
+        assert_eq!(cs2.img_icon_url, "6b814f92e25cec848c9729ce26c8f39afcc6e5f7");
         assert_eq!(cs2.achievements.len(), 1);
 
         assert_eq!(merged.unlocked_achievements, 3);
