@@ -16,6 +16,7 @@ pub struct IndexTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }
 
 pub async fn home(State(state): State<AppState>) -> impl IntoResponse {
@@ -27,5 +28,6 @@ pub async fn home(State(state): State<AppState>) -> impl IntoResponse {
         meta_description: state.config.description.clone(),
         meta_url: format!("{}/", state.config.base_url),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(&state.config.base_url),
     }
 }

@@ -1,5 +1,8 @@
 use crate::content::Post;
 use crate::models::{Project, SiteConfig};
+use crate::routes::about::AboutTemplate;
+use crate::routes::games::games_html;
+use crate::state::AppState;
 use crate::routes::blog::{blog_index_html, blog_page_html, blog_post_html, not_found_html};
 use askama::Template;
 
@@ -13,6 +16,7 @@ pub struct IndexTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }
 
 #[derive(Template)]
@@ -23,6 +27,7 @@ pub struct ProjectsTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }
 
 pub fn render_index(config: &SiteConfig, posts: &[Post]) -> String {
@@ -36,8 +41,21 @@ pub fn render_index(config: &SiteConfig, posts: &[Post]) -> String {
         meta_description: config.description.clone(),
         meta_url: format!("{}/", config.base_url),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(&config.base_url),
     };
     template.render().expect("failed to render index")
+}
+
+pub fn render_about(config: &SiteConfig) -> String {
+    let template = AboutTemplate {
+        config: config.clone(),
+        meta_title: "About — Yafi Alhakim".into(),
+        meta_description: "Background, experience, and stack of Yafi Alhakim.".into(),
+        meta_url: format!("{}/about", config.base_url),
+        meta_type: "website".into(),
+        og_image: crate::models::og_image(&config.base_url),
+    };
+    template.render().expect("failed to render about")
 }
 
 pub fn render_projects(config: &SiteConfig) -> String {
@@ -47,6 +65,7 @@ pub fn render_projects(config: &SiteConfig) -> String {
         meta_description: "Open source projects and tools built by Yafi Alhakim.".into(),
         meta_url: format!("{}/projects", config.base_url),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(&config.base_url),
     };
     template.render().expect("failed to render projects")
 }
@@ -63,6 +82,10 @@ pub fn render_blog_post(config: &SiteConfig, posts: &[Post], slug: &str) -> Opti
     blog_post_html(config, posts, slug)
 }
 
-pub fn render_not_found() -> String {
-    not_found_html()
+pub fn render_games(state: &AppState) -> String {
+    games_html(state)
+}
+
+pub fn render_not_found(base_url: &str) -> String {
+    not_found_html(base_url)
 }

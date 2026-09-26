@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="hero">
+  <p class="kicker mono">{{ config.role }} · {{ config.location }}</p>
+  <h1>{{ config.author }}</h1>
+  <p class="lead">{{ config.bio }}</p>
+  <div class="hero-links">
+    <a href="/projects" class="button button-primary">See projects</a>
+    <a href="/blog" class="button button-secondary">Read the blog</a>
+    <a href="https://self.so/yafialhakim" class="button button-ghost">CV ↗</a>
+  </div>
+</header>
+
+<section>
+  <h2 class="section-title">Experience</h2>
+  <ol class="timeline">
+    {% for job in config.experience %}
+    <li class="timeline-item">
+      <p class="timeline-period mono">{{ job.period }}</p>
+      <div>
+        <h3 class="timeline-role">{{ job.role }}</h3>
+        <p class="timeline-company">{{ job.company }}</p>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section>
+  <h2 class="section-title">Stack</h2>
+  <div class="stack-groups">
+    {% for group in config.tools %}
+    <div class="stack-group">
+      <h3 class="stack-name mono">{{ group.name }}</h3>
+      <ul class="stack-items">
+        {% for tool in group.items %}
+        <li>
+          {% if let Some(url) = tool.url %}<a href="{{ url }}" target="_blank" rel="noopener">{{ tool.name }}</a>{% else %}<span>{{ tool.name }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2 class="section-title">Elsewhere</h2>
+  <div class="link-list">
+    {% for link in config.links %}
+    <a class="link-chip mono" href="{{ link.url }}">{{ link.name }} ↗</a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

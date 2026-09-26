@@ -3,6 +3,7 @@ mod models;
 mod render;
 mod routes;
 mod state;
+mod steam;
 
 use crate::state::AppState;
 use axum::Router;
@@ -14,8 +15,11 @@ use tower_http::services::ServeDir;
 fn site_config() -> models::SiteConfig {
     models::SiteConfig {
         title: "Yafi Alhakim".into(),
-        description: "Fullstack Engineer building pragmatic tools for the web and desktop."
-            .into(),
+        description: concat!(
+            "Fullstack Engineer from Indonesia, currently at MySkill.id. I build for the web ",
+            "and the desktop — fast pages, honest APIs, and interfaces that stay out of the way."
+        )
+        .into(),
         base_url: "https://yaffalhakim1.github.io".into(),
         author: "Muhammad Yafi Alhakim".into(),
         github_url: "https://github.com/yaffalhakim1".into(),
@@ -83,7 +87,145 @@ fn site_config() -> models::SiteConfig {
                 demo: Some("https://summarizer-drab.vercel.app/".into()),
             },
         ],
+        role: "Frontend Engineer".into(),
+        location: "Jakarta, Indonesia".into(),
+        bio: concat!(
+            "I build for the web and the desktop, and I care most about the seam between them: ",
+            "fast pages, honest APIs, and interfaces that stay out of the way. When not debugging ",
+            "or sketching API routes, I write up the journey — a tutorial, a deployment log, ",
+            "or an aha moment."
+        )
+        .into(),
+        experience: experience(),
+        tools: tools(),
+        links: links(),
+        hero_cards: hero_cards(),
     }
+}
+
+fn experience() -> Vec<models::Experience> {
+    vec![
+        models::Experience {
+            role: "Frontend Engineer".into(),
+            company: "MySkill.id".into(),
+            period: "Feb 2024 — Present".into(),
+        },
+        models::Experience {
+            role: "Frontend Engineer Trainee".into(),
+            company: "Sea Labs Indonesia".into(),
+            period: "Oct 2023 — Feb 2024".into(),
+        },
+        models::Experience {
+            role: "Frontend Engineer".into(),
+            company: "Diponegoro University".into(),
+            period: "Dec 2022 — Apr 2023".into(),
+        },
+    ]
+}
+
+fn tools() -> Vec<models::ToolGroup> {
+    fn group(name: &str, items: &[(&str, Option<&str>)]) -> models::ToolGroup {
+        models::ToolGroup {
+            name: name.into(),
+            items: items
+                .iter()
+                .map(|(name, url)| models::Tool {
+                    name: (*name).into(),
+                    url: url.map(Into::into),
+                })
+                .collect(),
+        }
+    }
+
+    vec![
+        group(
+            "Frontend",
+            &[
+                ("React", Some("https://react.dev")),
+                ("Next.js", Some("https://nextjs.org")),
+                ("TypeScript", Some("https://www.typescriptlang.org")),
+                ("Tailwind CSS", Some("https://tailwindcss.com")),
+                ("Astro", Some("https://astro.build")),
+                ("Chakra UI", Some("https://chakra-ui.com")),
+            ],
+        ),
+        group(
+            "Backend & Infra",
+            &[
+                ("Rust", Some("https://www.rust-lang.org")),
+                ("Axum", Some("https://github.com/tokio-rs/axum")),
+                ("Node.js", Some("https://nodejs.org")),
+                ("Supabase", Some("https://supabase.com")),
+                ("Docker", Some("https://www.docker.com")),
+                ("cPanel", None),
+            ],
+        ),
+        group(
+            "Tooling",
+            &[
+                ("VS Code", Some("https://code.visualstudio.com")),
+                ("Git", Some("https://git-scm.com")),
+                ("Postman", Some("https://www.postman.com")),
+                ("Figma", Some("https://www.figma.com")),
+                ("Notion", Some("https://www.notion.so")),
+                ("Vercel", Some("https://vercel.com")),
+            ],
+        ),
+    ]
+}
+
+fn links() -> Vec<models::Link> {
+    vec![
+        models::Link {
+            name: "CV".into(),
+            url: "https://self.so/yafialhakim".into(),
+        },
+        models::Link {
+            name: "GitHub".into(),
+            url: "https://github.com/yaffalhakim1".into(),
+        },
+        models::Link {
+            name: "LinkedIn".into(),
+            url: "https://www.linkedin.com/in/yafialhakim/".into(),
+        },
+        models::Link {
+            name: "Fastwork".into(),
+            url: "https://fastwork.id/user/yaffalhaki/web-development-26119147".into(),
+        },
+        models::Link {
+            name: "Gumroad".into(),
+            url: "https://6679524908482.gumroad.com/l/nothing-design-astro".into(),
+        },
+        models::Link {
+            name: "Email".into(),
+            url: "mailto:yafialhakim64@gmail.com".into(),
+        },
+    ]
+}
+
+fn hero_cards() -> Vec<models::HeroCard> {
+    vec![
+        models::HeroCard {
+            label: "Role".into(),
+            value: "Frontend Engineer @ MySkill.id".into(),
+            url: None,
+        },
+        models::HeroCard {
+            label: "Location".into(),
+            value: "Jakarta, Indonesia".into(),
+            url: None,
+        },
+        models::HeroCard {
+            label: "Services".into(),
+            value: "Hire me on Fastwork".into(),
+            url: Some("https://fastwork.id/user/yaffalhaki/web-development-26119147".into()),
+        },
+        models::HeroCard {
+            label: "Templates".into(),
+            value: "Nothing Theme on Gumroad".into(),
+            url: Some("https://6679524908482.gumroad.com/l/nothing-design-astro".into()),
+        },
+    ]
 }
 
 fn export_dir() -> PathBuf {
@@ -95,7 +237,11 @@ fn export_dir() -> PathBuf {
 fn export_site(out_dir: &PathBuf) {
     let config = site_config();
     let posts = content::load_posts();
-    let state = AppState { config, posts };
+    let state = AppState {
+        config,
+        posts,
+        steam: steam::load(),
+    };
 
     if out_dir.exists() {
         std::fs::remove_dir_all(out_dir).expect("failed to clear export dir");
@@ -109,6 +255,14 @@ fn export_site(out_dir: &PathBuf) {
     write_file(
         &out_dir.join("projects/index.html"),
         &render::render_projects(&state.config),
+    );
+    write_file(
+        &out_dir.join("about/index.html"),
+        &render::render_about(&state.config),
+    );
+    write_file(
+        &out_dir.join("games/index.html"),
+        &render::render_games(&state),
     );
     write_file(
         &out_dir.join("blog/index.html"),
@@ -131,7 +285,10 @@ fn export_site(out_dir: &PathBuf) {
         );
     }
 
-    write_file(&out_dir.join("404.html"), &render::render_not_found());
+    write_file(
+        &out_dir.join("404.html"),
+        &render::render_not_found(&state.config.base_url),
+    );
 
     let rss = routes::feeds::rss_string(&state.config, &state.posts);
     let sitemap = routes::feeds::sitemap_string(&state.config, &state.posts);
@@ -164,11 +321,33 @@ fn copy_dir(src: &str, dst: &PathBuf) {
     }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let mut args = std::env::args().skip(1);
 
     if let Some(arg) = args.next() {
+        if arg == "--refresh-steam" {
+            match steam::refresh() {
+                Ok(data) => match steam::write_snapshot(&data) {
+                    Ok(()) => {
+                        eprintln!(
+                            "Wrote {} games, {} achievement sets to {}",
+                            data.total_games,
+                            data.achievements.len(),
+                            steam::snapshot_path().display()
+                        );
+                        return;
+                    }
+                    Err(error) => {
+                        eprintln!("Failed to write snapshot: {error}");
+                        std::process::exit(1);
+                    }
+                },
+                Err(error) => {
+                    eprintln!("Failed to refresh Steam data: {error}");
+                    std::process::exit(1);
+                }
+            }
+        }
         if arg == "--export" {
             let dir = args.next().map(PathBuf::from).unwrap_or_else(export_dir);
             export_site(&dir);
@@ -178,6 +357,11 @@ async fn main() {
         std::process::exit(2);
     }
 
+    serve();
+}
+
+#[tokio::main]
+async fn serve() {
     let config = site_config();
     let posts = content::load_posts();
 
@@ -187,12 +371,18 @@ async fn main() {
         content::posts_dir().display()
     );
 
-    let state = AppState { config, posts };
+    let state = AppState {
+        config,
+        posts,
+        steam: steam::load(),
+    };
 
     let static_service = get_service(ServeDir::new("static"));
 
     let app = Router::new()
         .route("/", get(routes::home::home))
+        .route("/about", get(routes::about::about))
+        .route("/games", get(routes::games::games))
         .route("/projects", get(routes::projects::projects))
         .route("/blog", get(routes::blog::blog))
         .route("/blog/page/{page}", get(routes::blog::blog_page))

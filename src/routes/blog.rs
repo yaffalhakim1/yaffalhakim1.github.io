@@ -41,6 +41,7 @@ pub struct BlogListTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }
 
 pub async fn blog(State(state): State<AppState>, Query(query): Query<BlogQuery>) -> Response {
@@ -48,7 +49,7 @@ pub async fn blog(State(state): State<AppState>, Query(query): Query<BlogQuery>)
     let page = query.page.unwrap_or(1).max(1);
 
     if page > total_pages && total_pages > 0 {
-        return not_found_response();
+        return not_found_response(&state.config.base_url);
     }
 
     let posts = slice_page(&state.posts, page.saturating_sub(1), PAGE_SIZE).to_vec();
@@ -61,6 +62,7 @@ pub async fn blog(State(state): State<AppState>, Query(query): Query<BlogQuery>)
         meta_description: "Technical writing on Rust, React, and web engineering.".into(),
         meta_url: format!("{}/blog/page/{page}", state.config.base_url),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(&state.config.base_url),
     }
     .into_response()
 }
@@ -79,6 +81,7 @@ pub fn blog_page_html(config: &SiteConfig, posts: &[Post], page: usize) -> Optio
         meta_description: "Technical writing on Rust, React, and web engineering.".into(),
         meta_url: format!("{}/blog/page/{page}", config.base_url),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(&config.base_url),
     };
     Some(template.render().expect("failed to render blog page"))
 }
@@ -97,6 +100,7 @@ pub struct BlogPostTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }
 
 pub fn blog_post_html(config: &SiteConfig, posts: &[Post], slug: &str) -> Option<String> {
@@ -122,6 +126,7 @@ pub fn blog_post_html(config: &SiteConfig, posts: &[Post], slug: &str) -> Option
                 meta_description: description,
                 meta_url: format!("{}/blog/{}", config.base_url, slug),
                 meta_type: "article".into(),
+                og_image: crate::models::og_image(&config.base_url),
             };
             template.render().expect("failed to render blog post")
         })
@@ -148,10 +153,11 @@ pub async fn blog_post(State(state): State<AppState>, Path(slug): Path<String>) 
                 meta_description: description,
                 meta_url: format!("{}/blog/{}", state.config.base_url, slug),
                 meta_type: "article".into(),
+                og_image: crate::models::og_image(&state.config.base_url),
             }
             .into_response()
         }
-        None => not_found_response(),
+        None => not_found_response(&state.config.base_url),
     }
 }
 
@@ -161,7 +167,7 @@ pub async fn blog_page(State(state): State<AppState>, Path(page): Path<String>) 
         Ok(page) if page > 1 => {
             let total_pages = page_count(state.posts.len(), PAGE_SIZE);
             if page > total_pages {
-                not_found_response()
+                not_found_response(&state.config.base_url)
             } else {
                 let posts = slice_page(&state.posts, page.saturating_sub(1), PAGE_SIZE).to_vec();
                 BlogListTemplate {
@@ -173,29 +179,31 @@ pub async fn blog_page(State(state): State<AppState>, Path(page): Path<String>) 
                         .into(),
                     meta_url: format!("{}/blog/page/{page}", state.config.base_url),
                     meta_type: "website".into(),
+                    og_image: crate::models::og_image(&state.config.base_url),
                 }
                 .into_response()
             }
         }
-        _ => not_found_response(),
+        _ => not_found_response(&state.config.base_url),
     }
 }
 
-pub async fn not_found_handler() -> Response {
-    not_found_response()
+pub async fn not_found_handler(State(state): State<AppState>) -> Response {
+    not_found_response(&state.config.base_url)
 }
 
-fn not_found_response() -> Response {
-    let html = not_found_html();
+fn not_found_response(base_url: &str) -> Response {
+    let html = not_found_html(base_url);
     (StatusCode::NOT_FOUND, axum::response::Html(html)).into_response()
 }
 
-pub fn not_found_html() -> String {
+pub fn not_found_html(base_url: &str) -> String {
     crate::routes::NotFoundTemplate {
         meta_title: "404 — Not Found".into(),
         meta_description: "The page you are looking for does not exist.".into(),
         meta_url: "/".into(),
         meta_type: "website".into(),
+        og_image: crate::models::og_image(base_url),
     }
     .render()
     .unwrap_or_else(|_| "<h1>404</h1>".into())
@@ -213,7 +221,14 @@ mod tests {
             base_url: "https://example.com".into(),
             author: "Test".into(),
             github_url: "https://github.com/test".into(),
+            role: "Frontend Engineer".into(),
+            location: "Jakarta, Indonesia".into(),
+            bio: "bio".into(),
             projects: Vec::new(),
+            experience: Vec::new(),
+            tools: Vec::new(),
+            links: Vec::new(),
+            hero_cards: Vec::new(),
         }
     }
 

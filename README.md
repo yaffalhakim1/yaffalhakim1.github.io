@@ -30,6 +30,8 @@ PORT=8080 cargo run
 | Route              | Description                                   |
 |--------------------|-----------------------------------------------|
 | `GET /`            | Home — hero, featured projects, recent posts  |
+| `GET /about`       | About - bio, experience, stack, links         |
+| `GET /games`       | Steam library, achievement progress, heatmap  |
 | `GET /projects`    | All projects                                  |
 | `GET /blog`        | Paginated blog list (6 per page)              |
 | `GET /blog?page=N` | Blog page N (backward-compatible)             |
@@ -39,6 +41,34 @@ PORT=8080 cargo run
 | `GET /rss.xml`     | RSS 2.0 feed                                  |
 | `GET /sitemap.xml` | XML sitemap                                   |
 | (anything else)    | 404 fallback                                  |
+
+## Steam data (`/games`)
+
+The `/games` page reads a committed snapshot at `content/steam.json`. Nothing
+calls Steam from the browser: the site is exported as static HTML, so a client
+call would leak the API key.
+
+Refresh the snapshot (needs `STEAM_API_KEY` and `STEAM_ID` in the environment):
+
+```bash
+cargo run -- --refresh-steam
+```
+
+The deploy workflow runs the same command when those secrets exist and falls
+back to the committed snapshot otherwise, so a Steam outage cannot break a
+deploy.
+
+The heatmap counts **achievement unlocks per day**, the only real per-day
+signal Steam exposes. Playtime is cumulative only, so it cannot honestly drive
+a contribution graph.
+
+## Site data
+
+Identity, projects, work history, stack, and links live in `src/main.rs` as
+small helper functions (`projects()`, `experience()`, `tools()`, `links()`,
+`hero_cards()`) that feed `site_config()`. The `/about` page renders
+`experience`, `tools`, and `links`; the homepage renders `hero_cards` plus the
+first four projects.
 
 ## Adding a post
 

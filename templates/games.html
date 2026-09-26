@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Games</h1>
+<p class="page-sub">Steam library, playtime, and a heatmap of achievement unlocks.</p>
+
+{% if let Some(data) = data %}
+{% if let Some(player) = data.player %}
+<section class="profile">
+  <img class="profile-avatar" src="{{ player.avatarfull }}" alt="{{ player.personaname }}" width="96" height="96" loading="lazy">
+  <div class="profile-meta">
+    <h2 class="profile-name">{{ player.personaname }}</h2>
+    {% if let Some(realname) = player.realname %}<p class="profile-real">{{ realname }}</p>{% endif %}
+    <div class="profile-stats">
+      <span class="chip mono">{{ data.total_games }} games</span>
+      <span class="chip mono">{{ total_playtime }} total</span>
+      <span class="chip mono">{{ data.unlocked_achievements }} achievements</span>
+    </div>
+    <a class="profile-link mono" href="{{ player.profileurl }}" target="_blank" rel="noopener">Steam ↗</a>
+  </div>
+</section>
+{% endif %}
+
+{% if let Some(heat) = heatmap %}
+<section>
+  <h2 class="section-title">Achievement Unlocks</h2>
+  <p class="section-note mono">{{ heat.total }} unlocks across {{ heat.weeks.len() }} weeks · busiest day {{ heat.busiest }}</p>
+  <div class="heatmap">
+    <div class="heatmap-months mono">
+      {% for week in heat.weeks %}<span class="heatmap-month">{% if let Some(m) = week.month %}{{ m }}{% endif %}</span>{% endfor %}
+    </div>
+    <div class="heatmap-grid">
+      {% for week in heat.weeks %}
+      <div class="heatmap-week">
+        {% for cell in week.cells %}
+        {% if cell.in_range %}
+        <span class="heat-cell" data-level="{{ cell.level }}" title="{{ cell.date }} — {{ cell.count }} unlocked"></span>
+        {% else %}
+        <span class="heat-cell is-empty"></span>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="heatmap-legend mono">
+      <span>less</span>
+      <span class="heat-cell" data-level="0"></span>
+      <span class="heat-cell" data-level="1"></span>
+      <span class="heat-cell" data-level="2"></span>
+      <span class="heat-cell" data-level="3"></span>
+      <span class="heat-cell" data-level="4"></span>
+      <span>more</span>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if !progress.is_empty() %}
+<section>
+  <h2 class="section-title">Achievement Progress</h2>
+  <div class="progress-list">
+    {% for game in progress %}
+    <div class="progress-row">
+      {% if !game.icon.is_empty() %}
+      <img class="progress-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="32" height="32" loading="lazy">
+      {% endif %}
+      <span class="progress-name">{{ game.name }}</span>
+      <span class="progress-count mono">{{ game.unlocked }}/{{ game.total }}</span>
+      <span class="progress-bar"><span class="progress-fill" style="width: {{ game.percent }}%"></span></span>
+      <span class="progress-pct mono">{{ game.percent }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if !top_games.is_empty() %}
+<section>
+  <h2 class="section-title">Most Played</h2>
+  <div class="game-grid">
+    {% for game in top_games %}
+    <a class="game-card" href="https://store.steampowered.com/app/{{ game.appid }}" target="_blank" rel="noopener">
+      {% if !game.icon.is_empty() %}
+      <img class="game-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="40" height="40" loading="lazy">
+      {% endif %}
+      <span class="game-body">
+        <span class="game-name">{{ game.name }}</span>
+        <span class="game-time mono">{{ game.playtime }}</span>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if !recent.is_empty() %}
+<section>
+  <h2 class="section-title">Recently Played</h2>
+  <div class="game-grid">
+    {% for game in recent %}
+    <a class="game-card" href="https://store.steampowered.com/app/{{ game.appid }}" target="_blank" rel="noopener">
+      {% if !game.icon.is_empty() %}
+      <img class="game-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="40" height="40" loading="lazy">
+      {% endif %}
+      <span class="game-body">
+        <span class="game-name">{{ game.name }}</span>
+        <span class="game-time mono">{{ game.recent }} this fortnight</span>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<p class="section-note mono">Snapshot taken {{ data.fetched_at }} · refreshed at build time.</p>
+{% else %}
+<section class="not-found">
+  <h1>Offline</h1>
+  <p>No Steam snapshot is present yet. Run <code>cargo run -- --refresh-steam</code> to create one.</p>
+</section>
+{% endif %}
+{% endblock %}

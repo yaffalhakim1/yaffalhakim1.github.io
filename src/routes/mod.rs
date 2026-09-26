@@ -1,5 +1,7 @@
+pub mod about;
 pub mod blog;
 pub mod feeds;
+pub mod games;
 pub mod home;
 pub mod projects;
 
@@ -13,4 +15,5 @@ pub struct NotFoundTemplate {
     pub meta_description: String,
     pub meta_url: String,
     pub meta_type: String,
+    pub og_image: String,
 }

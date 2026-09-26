@@ -26,6 +26,20 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # Refresh the Steam snapshot when the repo has the credentials. Without
+      # them (or if Steam is unreachable) the committed snapshot is used, so a
+      # transient API failure can never break a deploy.
+      - name: Refresh Steam snapshot
+        env:
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          STEAM_ID: ${{ secrets.STEAM_ID }}
+        run: |
+          if [ -z "$STEAM_API_KEY" ] || [ -z "$STEAM_ID" ]; then
+            echo "Steam secrets not configured; using committed snapshot."
+            exit 0
+          fi
+          cargo run -- --refresh-steam || echo "Steam refresh failed; using committed snapshot."
+
       - name: Export static site
         run: cargo run -- --export dist
 

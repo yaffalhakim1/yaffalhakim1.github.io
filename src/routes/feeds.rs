@@ -74,7 +74,7 @@ pub fn sitemap_string(config: &SiteConfig, posts: &[Post]) -> String {
     let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     xml.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
-    for path in ["/", "/projects", "/blog"] {
+    for path in ["/", "/about", "/games", "/projects", "/blog"] {
         xml.push_str(&format!("<url><loc>{base}{path}</loc></url>\n"));
     }
 

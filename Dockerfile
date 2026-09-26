@@ -10,6 +10,8 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && r
 # Build
 COPY src ./src
 COPY templates ./templates
+COPY content ./content
+COPY static ./static
 COPY build.rs ./
 
 RUN touch src/main.rs && cargo build --release

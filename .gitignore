@@ -1,3 +1,7 @@
 /target
 /dist
 /.hermes-task*.md
+
+# environment variables (Steam API credentials)
+.env
+.env.local

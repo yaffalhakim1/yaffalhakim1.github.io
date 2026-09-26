@@ -12,6 +12,25 @@
 </section>
 
 <section>
+  <h2 class="section-title">At a glance</h2>
+  <div class="card-grid">
+    {% for card in config.hero_cards %}
+    {% if let Some(url) = card.url %}
+    <a class="info-card" href="{{ url }}" target="_blank" rel="noopener">
+      <span class="info-label mono">{{ card.label }}</span>
+      <span class="info-value">{{ card.value }}</span>
+    </a>
+    {% else %}
+    <div class="info-card">
+      <span class="info-label mono">{{ card.label }}</span>
+      <span class="info-value">{{ card.value }}</span>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<section>
   <h2 class="section-title">Featured Projects</h2>
   <div class="grid">
     {% for project in featured %}
@@ -20,6 +39,10 @@
       <p>{{ project.description }}</p>
       <div class="tags">
         {% for tag in project.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+      </div>
+      <div class="card-links">
+        {% if let Some(source) = project.source %}<a href="{{ source }}">Source ↗</a>{% endif %}
+        {% if let Some(demo) = project.demo %}<a href="{{ demo }}">Demo ↗</a>{% endif %}
       </div>
     </article>
     {% endfor %}
