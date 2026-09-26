@@ -6,17 +6,21 @@
 {% if let Some(data) = data %}
 {% if let Some(player) = data.player %}
 <section class="profile">
-  <img class="profile-avatar" src="{{ player.avatarfull }}" alt="{{ player.personaname }}" width="96" height="96" loading="lazy">
-  <div class="profile-meta">
-    <h2 class="profile-name">{{ player.personaname }}</h2>
-    {% if let Some(realname) = player.realname %}<p class="profile-real">{{ realname }}</p>{% endif %}
-    <div class="profile-stats">
-      <span class="chip mono">{{ data.total_games }} games</span>
-      <span class="chip mono">{{ total_playtime }} total</span>
-      <span class="chip mono">{{ data.unlocked_achievements }} achievements</span>
+  <div class="profile-main">
+    <img class="profile-avatar" src="{{ player.avatarfull }}" alt="{{ player.personaname }}" width="80" height="80" loading="lazy">
+    <div class="profile-meta">
+      <div class="profile-header">
+        <h2 class="profile-name">{{ player.personaname }}</h2>
+        {% if let Some(realname) = player.realname %}<span class="profile-real mono">({{ realname }})</span>{% endif %}
+      </div>
+      <div class="profile-stats">
+        <span class="chip mono">{{ data.total_games }} games</span>
+        <span class="chip mono">{{ total_playtime }} total</span>
+        <span class="chip mono">{{ data.unlocked_achievements }} achievements</span>
+      </div>
     </div>
-    <a class="profile-link mono" href="{{ player.profileurl }}" target="_blank" rel="noopener">Steam ↗</a>
   </div>
+  <a class="button button-sm button-secondary profile-button mono" href="{{ player.profileurl }}" target="_blank" rel="noopener">Steam Profile ↗</a>
 </section>
 {% endif %}
 

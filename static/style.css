@@ -141,8 +141,15 @@ a:focus-visible, button:focus-visible {
   font-size: 0.8125rem;
   line-height: 1.4;
   text-transform: uppercase;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 .button:hover { text-decoration: none; }
+.button-sm {
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
 .button-primary {
   background: var(--accent);
   color: var(--surface);
@@ -185,11 +192,22 @@ a:focus-visible, button:focus-visible {
   gap: 1.25rem;
 }
 .card {
-  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   padding: 1.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
+  transition: border-color 0.15s;
+}
+.card:hover {
+  border-color: var(--accent);
+}
+.card-content {
+  display: flex;
+  flex-direction: column;
 }
 .card h3 {
   font-size: 1.25rem;
@@ -201,8 +219,9 @@ a:focus-visible, button:focus-visible {
 .card-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
   font-family: var(--mono);
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -578,12 +597,28 @@ html[data-theme="dark"] .z-punctuation { color: #D6D4C8; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.info-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.info-arrow {
+  color: var(--stone);
+  font-size: 0.75rem;
+  transition: color 0.15s, transform 0.15s;
 }
 a.info-card:hover {
   border-color: var(--accent);
   text-decoration: none;
 }
 a.info-card:hover .info-value { color: var(--accent); }
+a.info-card:hover .info-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
 .info-label {
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
@@ -697,13 +732,25 @@ a.info-card:hover .info-value { color: var(--accent); }
 /* ————— Games: profile ————— */
 .profile {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   margin-bottom: 3.5rem;
 }
+.profile-main {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
 .profile-avatar {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -711,10 +758,16 @@ a.info-card:hover .info-value { color: var(--accent); }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
-.profile-name { font-size: 1.75rem; }
-.profile-real { color: var(--olive); }
+.profile-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.profile-name { font-size: 1.5rem; }
+.profile-real { color: var(--stone); font-size: 0.8125rem; }
 .profile-stats {
   display: flex;
   flex-wrap: wrap;

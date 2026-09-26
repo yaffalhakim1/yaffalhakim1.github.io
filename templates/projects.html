@@ -4,14 +4,16 @@
 <div class="grid">
   {% for project in config.projects %}
   <article class="card">
-    <h3>{{ project.name }}</h3>
-    <p>{{ project.description }}</p>
-    <div class="tags">
-      {% for tag in project.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+    <div class="card-content">
+      <h3>{{ project.name }}</h3>
+      <p>{{ project.description }}</p>
+      <div class="tags">
+        {% for tag in project.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+      </div>
     </div>
     <div class="card-links">
-      {% if let Some(source) = project.source %}<a href="{{ source }}">Source ↗</a>{% endif %}
-      {% if let Some(demo) = project.demo %}<a href="{{ demo }}">Demo ↗</a>{% endif %}
+      {% if let Some(source) = project.source %}<a href="{{ source }}" class="button button-sm button-secondary" target="_blank" rel="noopener">Source ↗</a>{% endif %}
+      {% if let Some(demo) = project.demo %}<a href="{{ demo }}" class="button button-sm button-primary" target="_blank" rel="noopener">Demo ↗</a>{% endif %}
     </div>
   </article>
   {% endfor %}
