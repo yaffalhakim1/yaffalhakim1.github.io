@@ -229,7 +229,7 @@ mod tests {
             tools: Vec::new(),
             links: Vec::new(),
             hero_cards: Vec::new(),
-            highlights: Vec::new(),
+            static_games: Vec::new(),
         }
     }
 

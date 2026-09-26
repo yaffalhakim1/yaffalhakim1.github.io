@@ -100,19 +100,45 @@ fn site_config() -> models::SiteConfig {
         tools: tools(),
         links: links(),
         hero_cards: hero_cards(),
-        highlights: highlight_games(),
+        static_games: static_games(),
     }
 }
 
-fn highlight_games() -> Vec<models::HighlightGame> {
-    vec![models::HighlightGame {
-        name: "Assassin's Creed Shadows".into(),
-        platform: "Ubisoft Connect".into(),
-        playtime: "100 hrs".into(),
-        achievements: "100% unlocked".into(),
-        icon: "/static/ac-shadows.svg".into(),
-        url: Some("https://store.ubisoft.com/assassins-creed-shadows".into()),
-    }]
+fn static_games() -> Vec<models::StaticGame> {
+    vec![
+        models::StaticGame {
+            name: "Assassin's Creed Shadows".into(),
+            icon_url: "https://media.steampowered.com/steamcommunity/public/images/apps/3159330/1f8f5a64b174f9cc07d5b277e7b08219c262511f.jpg".into(),
+            playtime_hours: 100,
+            unlocked_achievements: 100,
+            total_achievements: 100,
+            store_url: Some("https://store.steampowered.com/app/3159330".into()),
+        },
+        models::StaticGame {
+            name: "Ghost of Tsushima".into(),
+            icon_url: "https://media.steampowered.com/steamcommunity/public/images/apps/2215430/e87b8cbe31f7bc5f40ee6ed94ccfa18f59f04fbc.jpg".into(),
+            playtime_hours: 80,
+            unlocked_achievements: 34,
+            total_achievements: 52,
+            store_url: Some("https://store.steampowered.com/app/2215430".into()),
+        },
+        models::StaticGame {
+            name: "Marvel's Spider-Man Remastered".into(),
+            icon_url: "https://media.steampowered.com/steamcommunity/public/images/apps/1817070/346333cb340139ad8b697005e5c79a3162c387b0.jpg".into(),
+            playtime_hours: 70,
+            unlocked_achievements: 25,
+            total_achievements: 50,
+            store_url: Some("https://store.steampowered.com/app/1817070".into()),
+        },
+        models::StaticGame {
+            name: "Marvel's Spider-Man 2".into(),
+            icon_url: "https://media.steampowered.com/steamcommunity/public/images/apps/2651280/74853ef20b2cce99818a4732ffb38a1234db2827.jpg".into(),
+            playtime_hours: 70,
+            unlocked_achievements: 25,
+            total_achievements: 50,
+            store_url: Some("https://store.steampowered.com/app/2651280".into()),
+        },
+    ]
 }
 
 fn experience() -> Vec<models::Experience> {

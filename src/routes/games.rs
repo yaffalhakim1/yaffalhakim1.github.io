@@ -10,15 +10,16 @@ use axum::response::IntoResponse;
 pub struct GameView {
     pub appid: u64,
     pub name: String,
-    pub icon: String,
+    pub icon_url: String,
     pub playtime: String,
     pub recent: String,
+    pub raw_playtime_minutes: u64,
+    pub store_url: Option<String>,
 }
 
 pub struct GameProgress {
-    pub appid: u64,
     pub name: String,
-    pub icon: String,
+    pub icon_url: String,
     pub unlocked: usize,
     pub total: usize,
     pub percent: usize,
@@ -32,7 +33,6 @@ pub struct GamesTemplate {
     pub recent: Vec<GameView>,
     pub top_games: Vec<GameView>,
     pub progress: Vec<GameProgress>,
-    pub highlights: Vec<crate::models::HighlightGame>,
     pub total_playtime: String,
     pub meta_title: String,
     pub meta_description: String,
@@ -42,12 +42,22 @@ pub struct GamesTemplate {
 }
 
 fn view(game: &steam::Game) -> GameView {
+    let icon_url = if game.img_icon_url.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "https://media.steampowered.com/steamcommunity/public/images/apps/{}/{}.jpg",
+            game.appid, game.img_icon_url
+        )
+    };
     GameView {
         appid: game.appid,
         name: game.name.clone(),
-        icon: game.img_icon_url.clone(),
+        icon_url,
         playtime: steam::format_playtime(game.playtime_forever),
         recent: steam::format_playtime(game.playtime_2weeks),
+        raw_playtime_minutes: game.playtime_forever,
+        store_url: Some(format!("https://store.steampowered.com/app/{}", game.appid)),
     }
 }
 
@@ -68,10 +78,24 @@ fn template(state: &AppState) -> GamesTemplate {
         })
         .unwrap_or_default();
 
-    let top_games = data
+    let mut all_top: Vec<GameView> = data
         .as_ref()
-        .map(|d| d.games.iter().take(9).map(view).collect())
+        .map(|d| d.games.iter().map(view).collect())
         .unwrap_or_default();
+
+    for sg in &state.config.static_games {
+        all_top.push(GameView {
+            appid: 0,
+            name: sg.name.clone(),
+            icon_url: sg.icon_url.clone(),
+            playtime: format!("{} hrs", sg.playtime_hours),
+            recent: String::new(),
+            raw_playtime_minutes: (sg.playtime_hours * 60) as u64,
+            store_url: sg.store_url.clone(),
+        });
+    }
+    all_top.sort_by(|a, b| b.raw_playtime_minutes.cmp(&a.raw_playtime_minutes));
+    let top_games: Vec<GameView> = all_top.into_iter().take(12).collect();
 
     let mut progress: Vec<GameProgress> = data
         .as_ref()
@@ -86,10 +110,17 @@ fn template(state: &AppState) -> GamesTemplate {
                         .iter()
                         .filter(|a| a.achieved == 1)
                         .count();
+                    let icon_url = if game.img_icon_url.is_empty() {
+                        String::new()
+                    } else {
+                        format!(
+                            "https://media.steampowered.com/steamcommunity/public/images/apps/{}/{}.jpg",
+                            game.appid, game.img_icon_url
+                        )
+                    };
                     GameProgress {
-                        appid: game.appid,
                         name: game.name.clone(),
-                        icon: game.img_icon_url.clone(),
+                        icon_url,
                         unlocked,
                         total,
                         percent: if total > 0 { unlocked * 100 / total } else { 0 },
@@ -98,6 +129,21 @@ fn template(state: &AppState) -> GamesTemplate {
                 .collect()
         })
         .unwrap_or_default();
+
+    for sg in &state.config.static_games {
+        let percent = if sg.total_achievements > 0 {
+            sg.unlocked_achievements * 100 / sg.total_achievements
+        } else {
+            0
+        };
+        progress.push(GameProgress {
+            name: sg.name.clone(),
+            icon_url: sg.icon_url.clone(),
+            unlocked: sg.unlocked_achievements,
+            total: sg.total_achievements,
+            percent,
+        });
+    }
     progress.sort_by(|a, b| b.percent.cmp(&a.percent).then(a.name.cmp(&b.name)));
 
     GamesTemplate {
@@ -110,7 +156,6 @@ fn template(state: &AppState) -> GamesTemplate {
         recent,
         top_games,
         progress,
-        highlights: state.config.highlights.clone(),
         meta_title: "Games — Yafi Alhakim".into(),
         meta_description: "Steam library, playtime, and a heatmap of achievement unlocks."
             .into(),

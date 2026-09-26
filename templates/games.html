@@ -26,29 +26,6 @@
 </section>
 {% endif %}
 
-{% if !highlights.is_empty() %}
-<section>
-  <h2 class="section-title">Hall of Fame</h2>
-  <div class="game-grid">
-    {% for game in highlights %}
-    {% if let Some(url) = game.url %}
-    <a class="game-card" href="{{ url }}" target="_blank" rel="noopener">
-    {% else %}
-    <div class="game-card">
-    {% endif %}
-      {% if !game.icon.is_empty() %}
-      <img class="game-icon" src="{{ game.icon }}" alt="" width="40" height="40" loading="lazy">
-      {% endif %}
-      <span class="game-body">
-        <span class="game-name">{{ game.name }}</span>
-        <span class="game-time mono">{{ game.platform }} · {{ game.playtime }} · {{ game.achievements }}</span>
-      </span>
-    {% if game.url.is_some() %}</a>{% else %}</div>{% endif %}
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
 {% if let Some(heat) = heatmap %}
 <section>
   <h2 class="section-title">Achievement Unlocks</h2>
@@ -89,8 +66,8 @@
   <div class="progress-list">
     {% for game in progress %}
     <div class="progress-row">
-      {% if !game.icon.is_empty() %}
-      <img class="progress-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="32" height="32" loading="lazy">
+      {% if !game.icon_url.is_empty() %}
+      <img class="progress-icon" src="{{ game.icon_url }}" alt="" width="32" height="32" loading="lazy">
       {% endif %}
       <span class="progress-name">{{ game.name }}</span>
       <span class="progress-count mono">{{ game.unlocked }}/{{ game.total }}</span>
@@ -107,15 +84,19 @@
   <h2 class="section-title">Most Played</h2>
   <div class="game-grid">
     {% for game in top_games %}
-    <a class="game-card" href="https://store.steampowered.com/app/{{ game.appid }}" target="_blank" rel="noopener">
-      {% if !game.icon.is_empty() %}
-      <img class="game-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="40" height="40" loading="lazy">
+    {% if let Some(url) = game.store_url %}
+    <a class="game-card" href="{{ url }}" target="_blank" rel="noopener">
+    {% else %}
+    <div class="game-card">
+    {% endif %}
+      {% if !game.icon_url.is_empty() %}
+      <img class="game-icon" src="{{ game.icon_url }}" alt="" width="40" height="40" loading="lazy">
       {% endif %}
       <span class="game-body">
         <span class="game-name">{{ game.name }}</span>
         <span class="game-time mono">{{ game.playtime }}</span>
       </span>
-    </a>
+    {% if game.store_url.is_some() %}</a>{% else %}</div>{% endif %}
     {% endfor %}
   </div>
 </section>
@@ -127,8 +108,8 @@
   <div class="game-grid">
     {% for game in recent %}
     <a class="game-card" href="https://store.steampowered.com/app/{{ game.appid }}" target="_blank" rel="noopener">
-      {% if !game.icon.is_empty() %}
-      <img class="game-icon" src="https://media.steampowered.com/steamcommunity/public/images/apps/{{ game.appid }}/{{ game.icon }}.jpg" alt="" width="40" height="40" loading="lazy">
+      {% if !game.icon_url.is_empty() %}
+      <img class="game-icon" src="{{ game.icon_url }}" alt="" width="40" height="40" loading="lazy">
       {% endif %}
       <span class="game-body">
         <span class="game-name">{{ game.name }}</span>

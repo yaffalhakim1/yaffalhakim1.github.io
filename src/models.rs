@@ -42,13 +42,13 @@ pub struct HeroCard {
 }
 
 #[derive(Debug, Clone)]
-pub struct HighlightGame {
+pub struct StaticGame {
     pub name: String,
-    pub platform: String,
-    pub playtime: String,
-    pub achievements: String,
-    pub icon: String,
-    pub url: Option<String>,
+    pub icon_url: String,
+    pub playtime_hours: u32,
+    pub unlocked_achievements: usize,
+    pub total_achievements: usize,
+    pub store_url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -66,7 +66,7 @@ pub struct SiteConfig {
     pub tools: Vec<ToolGroup>,
     pub links: Vec<Link>,
     pub hero_cards: Vec<HeroCard>,
-    pub highlights: Vec<HighlightGame>,
+    pub static_games: Vec<StaticGame>,
 }
 
 #[derive(Debug, Deserialize)]
