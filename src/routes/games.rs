@@ -32,6 +32,7 @@ pub struct GamesTemplate {
     pub recent: Vec<GameView>,
     pub top_games: Vec<GameView>,
     pub progress: Vec<GameProgress>,
+    pub highlights: Vec<crate::models::HighlightGame>,
     pub total_playtime: String,
     pub meta_title: String,
     pub meta_description: String,
@@ -109,6 +110,7 @@ fn template(state: &AppState) -> GamesTemplate {
         recent,
         top_games,
         progress,
+        highlights: state.config.highlights.clone(),
         meta_title: "Games — Yafi Alhakim".into(),
         meta_description: "Steam library, playtime, and a heatmap of achievement unlocks."
             .into(),

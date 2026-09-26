@@ -42,6 +42,15 @@ pub struct HeroCard {
 }
 
 #[derive(Debug, Clone)]
+pub struct HighlightGame {
+    pub name: String,
+    pub platform: String,
+    pub playtime: String,
+    pub achievements: String,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct SiteConfig {
     pub title: String,
     pub description: String,
@@ -56,6 +65,7 @@ pub struct SiteConfig {
     pub tools: Vec<ToolGroup>,
     pub links: Vec<Link>,
     pub hero_cards: Vec<HeroCard>,
+    pub highlights: Vec<HighlightGame>,
 }
 
 #[derive(Debug, Deserialize)]

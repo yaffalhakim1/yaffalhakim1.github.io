@@ -426,9 +426,25 @@ a:focus-visible, button:focus-visible {
   font-size: 0.6875rem;
   color: var(--stone);
 }
-.footer-top { width: 100%; justify-content: space-between; align-items: center; }
+.footer-top { display: flex; width: 100%; justify-content: space-between; align-items: center; }
 .footer a { color: var(--stone); text-transform: uppercase; }
 .footer a:hover { color: var(--accent); }
+.footer-icons {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.footer-icons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--stone);
+  transition: color 0.15s, transform 0.15s;
+}
+.footer-icons a:hover {
+  color: var(--accent);
+  transform: translateY(-2px);
+}
 .footer-stack {
   width: 100%;
   margin-top: -0.25rem;
@@ -762,11 +778,25 @@ a.info-card:hover .info-arrow {
 }
 .profile-header {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 .profile-name { font-size: 1.5rem; }
+.steam-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.5rem;
+  background: var(--sand);
+  border-radius: 6px;
+  color: var(--accent);
+  transition: background-color 0.15s, transform 0.15s;
+}
+.steam-icon-btn:hover {
+  background: var(--tag);
+  transform: translateY(-1px);
+}
 .profile-real { color: var(--stone); font-size: 0.8125rem; }
 .profile-stats {
   display: flex;
@@ -782,6 +812,40 @@ a.info-card:hover .info-arrow {
   font-size: 0.6875rem;
   line-height: 1.4;
   text-transform: uppercase;
+}
+
+/* ————— Games: Hall of Fame Highlights ————— */
+.highlight-card {
+  padding: 1.25rem;
+}
+.highlight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.platform-badge {
+  padding: 0.2rem 0.5rem;
+  background: var(--accent);
+  color: var(--surface);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.highlight-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--stone);
+}
+.highlight-note {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--olive);
+  font-style: italic;
 }
 .profile-link {
   margin-top: 0.25rem;
