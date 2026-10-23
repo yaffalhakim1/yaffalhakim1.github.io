@@ -24,68 +24,94 @@ fn site_config() -> models::SiteConfig {
         author: "Muhammad Yafi Alhakim".into(),
         github_url: "https://github.com/yaffalhakim1".into(),
         projects: vec![
-            models::Project {
-                name: "habit-terminal".into(),
-                description: "Terminal-themed habit tracker with gamified RPG progression."
-                    .into(),
-                tags: vec!["React", "TypeScript", "Vite", "TanStack Query", "CSS"]
-                    .into_iter()
-                    .map(Into::into)
-                    .collect(),
-                source: Some("https://github.com/yaffalhakim1/habit-terminal".into()),
-                demo: Some("https://yaffalhakim1.github.io/habit-terminal/".into()),
-            },
-            models::Project {
-                name: "NowOnTaskbar".into(),
-                description:
-                    "Show what's playing on your Windows taskbar (Spotify, YouTube, Chrome, Edge, VLC)."
-                        .into(),
-                tags: vec!["C#", "WinRT", "Win32", "GDI"]
-                    .into_iter()
-                    .map(Into::into)
-                    .collect(),
-                source: Some("https://github.com/yaffalhakim1/nowplaying-windows".into()),
-                demo: None,
-            },
-            models::Project {
-                name: "Kerenzikov".into(),
-                description:
-                    "A native app for all your coding agents. GPUI-based, Windows and Android, forked from waku and rebranded."
-                        .into(),
-                tags: vec!["Rust", "GPUI"].into_iter().map(Into::into).collect(),
-                source: Some("https://github.com/yaffalhakim1/Kerenzikov-app".into()),
-                demo: None,
-            },
-            models::Project {
-                name: "Codex Discord Bridge".into(),
-                description:
-                    "Lightweight Rust bridge connecting Codex to Discord for remote monitoring and approvals."
-                        .into(),
-                tags: vec!["Rust", "Discord"].into_iter().map(Into::into).collect(),
-                source: Some("https://github.com/yaffalhakim1/codex-discord-bridge".into()),
-                demo: None,
-            },
-            models::Project {
-                name: "Simple E-commerce".into(),
-                description:
-                    "E-commerce with Next.js App Router + React Server Components.".into(),
-                tags: vec!["Next.js", "TypeScript", "RSC"]
-                    .into_iter()
-                    .map(Into::into)
-                    .collect(),
-                source: None,
-                demo: Some("https://simple-ecommerce-appdir.vercel.app/".into()),
-            },
-            models::Project {
-                name: "Sumz".into(),
-                description: "Summarize any article with AI in seconds.".into(),
-                tags: vec!["React", "TypeScript", "OpenAI API"]
-                    .into_iter()
-                    .map(Into::into)
-                    .collect(),
-                source: None,
-                demo: Some("https://summarizer-drab.vercel.app/".into()),
-            },
+            project(
+                "Kerenzikov",
+                "A native app for all your coding agents — one window for fourteen agent CLIs, \
+                 driving the tools already on your machine over their own protocols. Forked from \
+                 egoist/waku.",
+                &["Rust", "GPUI", "Windows", "Android"],
+                Some("https://github.com/yaffalhakim1/Kerenzikov-app"),
+                Some("https://kerenzikov.pages.dev/"),
+                Some("kerenzikov"),
+            ),
+            project(
+                "habit-terminal",
+                "A monospace, terminal-themed habit tracker with gamified RPG progression. Build \
+                 habits, track streaks, level up your character — all in a dark, minimal interface.",
+                &["TypeScript", "React", "Vite", "PWA"],
+                Some("https://github.com/yaffalhakim1/habit-terminal"),
+                Some("https://yaffalhakim1.github.io/habit-terminal/"),
+                Some("habit-terminal"),
+            ),
+            project(
+                "opencode-mobile",
+                "A native Android client for a self-hosted OpenCode server. Watch replies arrive \
+                 word by word, answer questions inline, approve the files it edits.",
+                &["Kotlin", "Jetpack Compose", "Material 3"],
+                Some("https://github.com/yaffalhakim1/opencode-mobile"),
+                Some("https://yaffalhakim1.github.io/opencode-mobile/"),
+                Some("opencode-mobile"),
+            ),
+            project(
+                "playlist",
+                "A native desktop player for YouTube playlists. Paste a link and it plays — no \
+                 browser tab, no webview, no ads behind the sound.",
+                &["Go", "MyGo", "Desktop"],
+                Some("https://github.com/yaffalhakim1/playlist"),
+                Some("https://yaffalhakim1.github.io/playlist/"),
+                Some("playlist"),
+            ),
+            project(
+                "ports",
+                "See every listening TCP port on Windows with the process that owns it, its PID, \
+                 and the folder it was started in. Open, restart or stop it from the list.",
+                &["Go", "MyGo", "Windows"],
+                Some("https://github.com/yaffalhakim1/ports"),
+                Some("https://yaffalhakim1.github.io/ports/"),
+                Some("ports"),
+            ),
+            project(
+                "sweep",
+                "Find the build output eating your disk — Rust target, node_modules, framework \
+                 caches, Gradle and Android trees — and remove it in one pass.",
+                &["Go", "MyGo", "CLI"],
+                Some("https://github.com/yaffalhakim1/sweep"),
+                Some("https://yaffalhakim1.github.io/sweep/"),
+                Some("sweep"),
+            ),
+            project(
+                "NowOnTaskbar",
+                "Show what's playing on your Windows taskbar (Spotify, YouTube, Chrome, Edge, VLC).",
+                &["C#", "WinRT", "Win32", "GDI"],
+                Some("https://github.com/yaffalhakim1/nowplaying-windows"),
+                None,
+                None,
+            ),
+            project(
+                "Codex Discord Bridge",
+                "Lightweight Rust bridge connecting Codex to Discord for remote monitoring and \
+                 approvals.",
+                &["Rust", "Discord"],
+                Some("https://github.com/yaffalhakim1/codex-discord-bridge"),
+                None,
+                None,
+            ),
+            project(
+                "Simple E-commerce",
+                "E-commerce with Next.js App Router + React Server Components.",
+                &["Next.js", "TypeScript", "RSC"],
+                None,
+                Some("https://simple-ecommerce-appdir.vercel.app/"),
+                None,
+            ),
+            project(
+                "Sumz",
+                "Summarize any article with AI in seconds.",
+                &["React", "TypeScript", "OpenAI API"],
+                None,
+                Some("https://summarizer-drab.vercel.app/"),
+                None,
+            ),
         ],
         role: "Frontend Engineer".into(),
         location: "Jakarta, Indonesia".into(),
@@ -101,6 +127,24 @@ fn site_config() -> models::SiteConfig {
         links: links(),
         hero_cards: hero_cards(),
         static_games: static_games(),
+    }
+}
+
+fn project(
+    name: &str,
+    description: &str,
+    tags: &[&str],
+    source: Option<&str>,
+    demo: Option<&str>,
+    image: Option<&str>,
+) -> models::Project {
+    models::Project {
+        name: name.into(),
+        description: description.into(),
+        tags: tags.iter().map(|tag| (*tag).into()).collect(),
+        source: source.map(Into::into),
+        demo: demo.map(Into::into),
+        image: image.map(|slug| format!("/static/projects/{slug}.webp")),
     }
 }
 

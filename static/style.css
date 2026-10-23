@@ -209,6 +209,19 @@ a:focus-visible, button:focus-visible {
   display: flex;
   flex-direction: column;
 }
+.card-thumb {
+  width: calc(100% + 3rem);
+  height: auto;
+  aspect-ratio: 16 / 10;
+  margin: -1.5rem -1.5rem 1.25rem;
+  object-fit: cover;
+  object-position: top center;
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  background: var(--sand);
+  transition: filter 0.15s;
+}
+.card:hover .card-thumb { filter: saturate(1.05); }
 .card h3 {
   font-size: 1.25rem;
 }

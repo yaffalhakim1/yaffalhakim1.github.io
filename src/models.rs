@@ -7,6 +7,7 @@ pub struct Project {
     pub tags: Vec<String>,
     pub source: Option<String>,
     pub demo: Option<String>,
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Clone)]

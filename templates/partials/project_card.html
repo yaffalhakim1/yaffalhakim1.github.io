@@ -1,0 +1,16 @@
+<article class="card">
+  <div class="card-content">
+    {% if let Some(image) = project.image %}
+    <img class="card-thumb" src="{{ image }}" alt="Screenshot of {{ project.name }}" width="800" height="500" loading="lazy" decoding="async">
+    {% endif %}
+    <h3>{{ project.name }}</h3>
+    <p>{{ project.description }}</p>
+    <div class="tags">
+      {% for tag in project.tags %}<span class="tag mono">{{ tag }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="card-links">
+    {% if let Some(source) = project.source %}<a href="{{ source }}" class="button button-sm button-secondary" target="_blank" rel="noopener">Source ↗</a>{% endif %}
+    {% if let Some(demo) = project.demo %}<a href="{{ demo }}" class="button button-sm button-primary" target="_blank" rel="noopener">Demo ↗</a>{% endif %}
+  </div>
+</article>
