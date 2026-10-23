@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Projects</h1>
-<p class="lead">Things I build for the web, the desktop, and Android — most of them open source, most of them with a live page you can poke at.</p>
+<p class="lead">Six things I build and ship — for the desktop, Android, and the browser. All open source, each with a page of its own.</p>
 <div class="grid">
   {% for project in config.projects %}{% include "partials/project_card.html" %}{% endfor %}
 </div>
